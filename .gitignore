@@ -1,7 +1,11 @@
 .venv/
 __pycache__/
+adsb/
+run/
 *.pyc
 .env
 AGENTS.md
+*.txt
 
-config.local.py
+
+config_local.py

@@ -6,21 +6,29 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 
 # Load configuration
 try:
-    from config import TOKEN, CHAT_ID, LAT_ANTENA, LON_ANTENA, BOT_NAME
+    from config import TOKEN, CHAT_ID, LAT_ANTENA, LON_ANTENA, BOT_NAME, DISTANCE_UNIT
 except ImportError:
     print("❌ Error: Please create config.py based on config.example.py")
     exit(1)
 
 
 def calculate_distance(lat1, lon1, lat2, lon2):
-    """Calculate distance in km using Haversine formula"""
+    """Calculate distance using Haversine formula"""
     rad = math.pi / 180
     dlat = (lat2 - lat1) * rad
     dlon = (lon2 - lon1) * rad
     a = math.sin(dlat/2)**2 + math.cos(lat1*rad) * \
         math.cos(lat2*rad) * math.sin(dlon/2)**2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-    return round(6371 * c, 1)
+
+    if DISTANCE_UNIT.lower() == "miles":
+        distance = 3958.8 * c      # Earth's radius in miles
+        unit_text = "mi"
+    else:
+        distance = 6371 * c        # Earth's radius in km
+        unit_text = "km"
+
+    return round(distance, 1), unit_text
 
 
 def get_adsb_data():
@@ -45,8 +53,9 @@ def get_adsb_data():
             if not lat or not lon or altitude is None or speed is None:
                 continue
 
-            distance = calculate_distance(LAT_ANTENA, LON_ANTENA, lat, lon)
-            dist_text = f"{distance} km"
+            distance, unit_text = calculate_distance(
+                LAT_ANTENA, LON_ANTENA, lat, lon)
+            dist_text = f"{distance} {unit_text}"
 
             if distance < min_distance:
                 min_distance = distance
@@ -73,18 +82,18 @@ async def radar_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if total == 0:
-        message = f"🛰️ **{BOT_NAME}**\n\nNo aircraft with complete data at the moment.\n🕒 {timestamp}"
+        mensagem = f"📡 **{BOT_NAME}**\n\nNo aircraft with complete data at the moment.\n🕒 {timestamp}"
     else:
-        message = f"🛰️ **{BOT_NAME} - {timestamp}**\n\n"
-        message += f"📊 **Monitored aircraft:** `{total}`\n"
+        mensagem = f"📡 **{BOT_NAME} - {timestamp}**\n\n"
+        mensagem += f"📊 **Monitored aircraft:** `{total}`\n"
 
         if closest:
-            message += f"🎯 **Closest:** {closest}\n"
+            mensagem += f"🎯 **Closest:** {closest}\n"
 
-        message += "\n📋 **Identified flights:**\n"
-        message += "\n".join(summary)
+        mensagem += "\n📋 **Identified flights:**\n"
+        mensagem += "\n".join(summary)
 
-    await update.message.reply_text(message, parse_mode="Markdown")
+    await update.message.reply_text(mensagem, parse_mode="Markdown")
 
 
 def main():
