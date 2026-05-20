@@ -1,19 +1,30 @@
 # ADS-B Telegram Bot
 
-A simple and clean Telegram bot to monitor aircraft in real-time using your ADS-B receiver (dump1090-fa / readsb).
+**Real-time Aircraft Monitoring for your Telegram** 🛰️✈️
+
+A clean, fast and lightweight Telegram bot designed for **PiAware + dump1090-fa / readsb** users.
 
 ![Screenshot](screenshot.png)
 
-## Features
+### Why users love it
 
-- Real-time aircraft monitoring
-- Shows closest aircraft with distance
-- Clean summary of identified flights
-- Distance calculation using Haversine formula
+- See live aircraft count
+- Know exactly which plane is closest to your antenna (with distance)
+- Beautiful and clean flight summary
+- Accurate distance calculation (Haversine)
+- Very easy to install and use
+
+### Features
+
+- Real-time monitoring using your local dump1090-fa
+- Highlights the closest aircraft
+- Supports **km** and **miles** (configurable)
+- Clean Markdown formatting
+- Actively maintained with regular updates
 - Easy one-command installation
 
-## Quick Install
+### Quick Install
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/install.sh?ref=install | sudo bash
 ```
