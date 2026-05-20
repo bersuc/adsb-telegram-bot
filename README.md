@@ -28,3 +28,11 @@ A clean, fast and lightweight Telegram bot designed for **PiAware + dump1090-fa 
 ```bash
 curl -sSL https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/install.sh?ref=install | sudo bash
 ```
+
+# Update command
+
+In case you are already have config.py configured.
+
+```bash
+curl -sSL https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/update.sh | sudo bash
+```
