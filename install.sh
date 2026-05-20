@@ -1,6 +1,6 @@
 #!/bin/bash
 # ADS-B Telegram Bot Installer
-# Version: 1.3 - Minimal
+# Version: 1.5
 
 echo "🚀 ADS-B Telegram Bot Installer"
 echo "=============================="
@@ -9,7 +9,10 @@ echo "=============================="
 sudo mkdir -p /opt/adsb-telegram-bot
 cd /opt/adsb-telegram-bot
 
-# Install python-telegram-bot
+# Set correct permissions
+sudo chown -R pi:pi /opt/adsb-telegram-bot
+
+# Install dependency
 echo "🐍 Installing python-telegram-bot..."
 sudo python3 -m pip install python-telegram-bot --upgrade --break-system-packages
 
@@ -18,18 +21,48 @@ echo "📥 Downloading files..."
 sudo curl -sL -o bot.py https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/bot.py
 sudo curl -sL -o config.py https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/config.py
 
-# Make executable and create shortcut
+# Set permissions
+sudo chown pi:pi bot.py config.py
 sudo chmod +x bot.py
+
+# Create symlink
 sudo ln -sf /opt/adsb-telegram-bot/bot.py /usr/local/bin/adsb-bot
+
+# Create systemd service running as user 'pi'
+echo "⚙️ Creating systemd service (running as user pi)..."
+sudo tee /etc/systemd/system/adsb-telegram-bot.service > /dev/null << 'EOF'
+[Unit]
+Description=ADS-B Telegram Bot for PiAware + dump1090-fa
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/opt/adsb-telegram-bot
+ExecStart=/usr/bin/python3 /opt/adsb-telegram-bot/bot.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now adsb-telegram-bot.service
 
 echo ""
 echo "✅ Installation completed successfully!"
 echo ""
 echo "Next steps:"
-echo "   1. Edit config:"
+echo "   1. Edit the configuration file:"
 echo "      nano /opt/adsb-telegram-bot/config.py"
 echo ""
-echo "   2. Run the bot:"
-echo "      python3 /opt/adsb-telegram-bot/bot.py"
+echo "Service commands:"
+echo "   sudo systemctl status adsb-telegram-bot.service"
+echo "   sudo journalctl -u adsb-telegram-bot.service -f"
+echo "   sudo systemctl restart adsb-telegram-bot.service"
 echo ""
-echo "To update: run this script again."
+echo "To update the bot later, just run this installer again."
