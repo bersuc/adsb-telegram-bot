@@ -1,38 +1,86 @@
 # ADS-B Telegram Bot
 
-**Real-time Aircraft Monitoring for your Telegram** 🛰️✈️
+Lightweight Telegram bot for Raspberry Pi users running PiAware, dump1090-fa, or readsb. It reads local JSON data only and keeps setup simple.
 
-A clean, fast and lightweight Telegram bot designed for **PiAware + dump1090-fa / readsb** users.
+## Features
 
-![Screenshot](screenshot.png)
+- Live aircraft tracking from local JSON output
+- Closest aircraft summary with distance and altitude
+- Receiver health in plain language
+- SNR monitoring
+- Saturation monitoring
+- CPU temperature display
+- Uptime display
+- Local IP display
+- tar1090 quick link
+- Version information
 
-### Why users love it
+## Create Your Telegram Bot
 
-- See live aircraft count
-- Know exactly which plane is closest to your antenna (with distance)
-- Beautiful and clean flight summary
-- Accurate distance calculation (Haversine)
-- Very easy to install and use
+Before installing the bot on your Raspberry Pi, you need a Telegram bot token. That sounds serious, but it is actually the fun part.
 
-### Features
+1. Open Telegram on your phone or desktop.
+2. Search for `@BotFather`.
+3. Start a chat with BotFather and send `/newbot`.
+4. Give your bot a friendly display name, like `ADS-B Monitor`.
+5. Choose a username for the bot. It must end with `bot`, such as `adsb_monitor_bot`.
+6. BotFather will reply with a long token. Keep it safe. That token is the key to your bot’s life.
+7. Start a chat with your new bot and press Start. This confirms that Telegram created it correctly.
 
-- Real-time monitoring using your local dump1090-fa
-- Highlights the closest aircraft
-- Supports **km** and **miles** (configurable)
-- Clean Markdown formatting
-- Actively maintained with regular updates
-- Easy one-command installation
+If you want your bot to feel more polished, you can also use BotFather later to set a profile picture, description, and commands. None of that is required for this project, but it is nice extra flavor.
 
-### Quick Install
+## Find Your Chat ID
+
+This bot only responds to one chat, so you need your `CHAT_ID`.
+
+1. Open a chat with your new bot.
+2. Send any message, like `hello`.
+3. The easiest way is to use Telegram Web in your browser.
+4. Open `https://web.telegram.org` and connect your Telegram account.
+5. Open your bot chat, or create a chat with your bot if it does not exist yet.
+6. Look at the URL in the browser. It will look like `https://web.telegram.org/a/#-1234567890`.
+7. The number after `#` is your chat ID. In this example, the chat ID is `-1234567890`.
+8. Put that number into `config.py`.
+
+Only messages from that chat will be accepted.
+
+## Install the Bot
+
+Once you have the token and chat ID, install the bot on the Raspberry Pi.
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/install.sh?ref=install | sudo bash
+curl -sSL https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/install.sh | sudo bash
 ```
 
-# Update command
+The installer downloads `bot.py` and `config.py`, then creates the service.
 
-In case you are already have config.py configured.
+## Configuration
+
+Edit `config.py` with:
+
+- `TOKEN`
+- `CHAT_ID`
+- `LAT_ANTENA`
+- `LON_ANTENA`
+- `BOT_NAME`
+- `DISTANCE_UNIT`
+
+Distance units are set manually with `DISTANCE_UNIT = "km"` or `DISTANCE_UNIT = "miles"`.
+
+Version is defined in `bot.py` and updated with the bot release.
+
+## Commands
+
+- `/radar` - Show live aircraft and the closest flight
+- `/status` - Show receiver health and system status
+- `/about` - Show bot and command information
+
+## Update
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/update.sh | sudo bash
 ```
+
+## Example Config
+
+If you want a starting point, copy `config.example.py` to `config.py` and edit the values for your station.

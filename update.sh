@@ -9,17 +9,17 @@ echo "============================"
 echo "⏹️  Stopping service..."
 sudo systemctl stop adsb-telegram-bot.service
 
-# Create backup of current bot.py
+# Create backup of current bot file
 echo "📦 Creating backup..."
-sudo cp /opt/adsb-telegram-bot/bot.py /opt/adsb-telegram-bot/bot.py.bak 2>/dev/null || true
+sudo cp /home/pi/bot_adsb.py /home/pi/bot_adsb.py.bak 2>/dev/null || true
 
 # Download latest version
-echo "📥 Downloading latest bot.py..."
-sudo curl -sL -o /opt/adsb-telegram-bot/bot.py https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/bot.py
+echo "📥 Downloading latest bot file..."
+sudo curl -sL -o /home/pi/bot_adsb.py https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/bot.py
 
 # Set permissions
-sudo chown pi:pi /opt/adsb-telegram-bot/bot.py
-sudo chmod +x /opt/adsb-telegram-bot/bot.py
+sudo chown pi:pi /home/pi/bot_adsb.py
+sudo chmod +x /home/pi/bot_adsb.py
 
 # Start the service again
 echo "▶️  Starting service..."
