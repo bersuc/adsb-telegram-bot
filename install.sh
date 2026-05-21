@@ -27,7 +27,7 @@ sudo chmod +x "${BOT_FILE}"
 echo "⚙️ Creating systemd service (running as user pi)..."
 sudo tee /etc/systemd/system/adsb-telegram-bot.service > /dev/null << 'EOF'
 [Unit]
-Description=Bot do Telegram para Monitoramento ADSB
+Description=ADSB Telegram Bot Monitoring Service
 After=network.target dump1090-fa.service
 
 [Service]
