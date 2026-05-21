@@ -49,7 +49,7 @@ Only messages from that chat will be accepted.
 Once you have the token and chat ID, install the bot on the Raspberry Pi.
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/install.sh?ref=install | sudo bash
 ```
 
 The installer downloads `bot.py` and `config.py`, then creates the service.
@@ -78,7 +78,7 @@ Version is defined in `bot.py` and updated with the bot release.
 ## Update
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/update.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/update.sh?ref=update | sudo bash
 ```
 
 ## Example Config
