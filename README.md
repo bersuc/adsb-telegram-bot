@@ -15,12 +15,12 @@ Lightweight Telegram bot for Raspberry Pi users running PiAware, dump1090-fa, or
 - tar1090 quick link
 - Version information
 
-### Status
-
+### Radar
+/radar
 ![Radar](screenshot.png)
 
 ### Status
-
+/status
 ![Status](screenshot2.png)
 
 ## Create Your Telegram Bot
