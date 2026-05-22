@@ -15,6 +15,14 @@ Lightweight Telegram bot for Raspberry Pi users running PiAware, dump1090-fa, or
 - tar1090 quick link
 - Version information
 
+### Status
+
+![Radar](screenshot.png)
+
+### Status
+
+![Status](screenshot2.png)
+
 ## Create Your Telegram Bot
 
 Before installing the bot on your Raspberry Pi, you need a Telegram bot token. That sounds serious, but it is actually the fun part.
