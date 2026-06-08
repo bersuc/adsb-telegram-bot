@@ -1,6 +1,6 @@
 #!/bin/bash
 # ADS-B Telegram Bot Updater
-# Version: 1.0
+# Version: 1.1
 
 echo "🔄 ADS-B Telegram Bot Updater"
 echo "============================"
@@ -14,15 +14,15 @@ echo "📦 Creating backup..."
 sudo cp /opt/adsb-telegram-bot/bot.py /opt/adsb-telegram-bot/bot.py.bak 2>/dev/null || true
 
 # Download latest version
-echo "📥 Downloading latest bot.py..."
+echo "📥 Downloading latest version..."
 sudo curl -sL -o /opt/adsb-telegram-bot/bot.py https://raw.githubusercontent.com/bersuc/adsb-telegram-bot/main/bot.py
 
 # Set permissions
 sudo chown pi:pi /opt/adsb-telegram-bot/bot.py
 sudo chmod +x /opt/adsb-telegram-bot/bot.py
 
-# Start the service again
-echo "▶️  Starting service..."
+# Restart the service
+echo "▶️  Restarting service..."
 sudo systemctl start adsb-telegram-bot.service
 
 echo ""
