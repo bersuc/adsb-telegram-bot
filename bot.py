@@ -68,19 +68,25 @@ def cpu_rating(temp):
 
 
 def get_uptime():
+    seconds = get_uptime_seconds()
+    if seconds is None:
+        return "Unknown"
+
+    days = int(seconds // 86400)
+    hours = int((seconds % 86400) // 3600)
+    minutes = int((seconds % 3600) // 60)
+
+    if days:
+        return f"{days}d {hours}h"
+    return f"{hours}h {minutes}m"
+
+
+def get_uptime_seconds():
     try:
         with open("/proc/uptime", encoding="utf-8") as file:
-            seconds = float(file.readline().split()[0])
-
-        days = int(seconds // 86400)
-        hours = int((seconds % 86400) // 3600)
-        minutes = int((seconds % 3600) // 60)
-
-        if days:
-            return f"{days}d {hours}h"
-        return f"{hours}h {minutes}m"
+            return float(file.readline().split()[0])
     except Exception:
-        return "Unknown"
+        return None
 
 
 def calculate_distance(lat1, lon1, lat2, lon2):
@@ -110,37 +116,60 @@ def get_snr_rating(snr):
     return "🔴 Weak"
 
 
-def get_saturation_rating(saturation):
-    if saturation is None:
+def get_strong_signal_rating(value):
+    if value is None:
         return "⚪ Unknown"
-    if saturation < 1:
+    if value < 0.5:
+        return "🟡 Low"
+    if value <= 5:
         return "🟢 Excellent"
-    if saturation <= 5:
-        return "🟡 Normal"
-    return "🔴 High"
+    if value <= 10:
+        return "🟡 Good"
+    return "🔴 Too High"
 
 
-def get_receiver_health(snr, saturation, temp):
-    ratings = [get_snr_rating(snr), get_saturation_rating(
-        saturation), cpu_rating(temp)]
+def get_strong_signal_status(value):
+    if value is None:
+        return "unknown"
+    if value < 0.5:
+        return "low"
+    if value <= 5:
+        return "excellent"
+    if value <= 10:
+        return "good"
+    return "too_high"
 
-    if any(rating.startswith("🔴") for rating in ratings):
+
+def get_receiver_health(snr, strong_percent, temp):
+    snr_rating = get_snr_rating(snr)
+    temp_rating = cpu_rating(temp)
+    strong_status = get_strong_signal_status(strong_percent)
+
+    if strong_status == "too_high" or snr_rating.startswith("🔴") or temp_rating.startswith("🔴"):
         return "🔴 Attention Needed"
-    if any(rating.startswith("🟡") for rating in ratings):
+    if strong_status == "low":
+        return "🟡 Good"
+    if snr_rating.startswith("🟡") or temp_rating.startswith("🟡") or strong_status == "good":
         return "🟡 Good"
     return "🟢 Excellent"
 
 
-def _first_number(value, default=0):
+def _sum_numbers(value, default=0):
     if isinstance(value, list):
         if not value:
             return default
-        value = value[0]
+        try:
+            return sum(int(item) for item in value)
+        except Exception:
+            return default
 
     if value is None:
         return default
 
-    return value
+    try:
+        return int(value)
+    except Exception:
+        return default
 
 
 # --------------------------------------------------
@@ -165,21 +194,25 @@ def get_receiver_metrics(stats):
 
         signal = minute.get("signal")
         noise = minute.get("noise")
-        snr = round(noise - signal,
+        snr = round(abs(signal - noise),
                     1) if signal is not None and noise is not None else None
 
-        accepted = int(_first_number(total.get("accepted"), 0))
-        strong = int(_first_number(total.get("strong_signals"), 0))
-        saturation = round((strong / accepted) * 100, 2) if accepted > 0 else 0
+        accepted_total = _sum_numbers(total.get("accepted"), 0)
+        strong = int(total.get("strong_signals", 0))
+        minute_messages = _sum_numbers(minute.get("accepted"), 0)
+
+        strong_percent = round((strong / accepted_total)
+                               * 100, 2) if accepted_total > 0 else 0
 
         return {
             "signal": signal,
             "noise": noise,
             "snr": snr,
             "gain": minute.get("gain_db"),
-            "accepted": accepted,
+            "minute_messages": minute_messages,
+            "accepted": accepted_total,
             "strong": strong,
-            "saturation": saturation,
+            "strong_percent": strong_percent,
         }
     except Exception:
         return None
@@ -245,6 +278,50 @@ def _format_version():
     return version if version.startswith("v") else f"v{version}"
 
 
+def get_receiver_quality(temp, snr, strong_percent, uptime_seconds):
+    score = 0.0
+
+    if temp is None:
+        score += 0.5
+    elif temp < 60:
+        score += 1.0
+    elif temp <= 75:
+        score += 0.5
+
+    if snr is None:
+        score += 0.5
+    elif snr >= 18:
+        score += 1.0
+    elif snr >= 12:
+        score += 0.5
+
+    if strong_percent is None:
+        score += 0.5
+    elif strong_percent < 0.5:
+        score += 0.5
+    elif strong_percent <= 5:
+        score += 1.0
+    elif strong_percent <= 10:
+        score += 0.5
+
+    if uptime_seconds is None:
+        score += 0.5
+    elif uptime_seconds >= 7 * 86400:
+        score += 1.0
+    elif uptime_seconds >= 24 * 3600:
+        score += 0.5
+
+    if score >= 3.5:
+        return "⭐⭐⭐⭐⭐ Perfect"
+    if score >= 2.75:
+        return "⭐⭐⭐⭐ Very Good"
+    if score >= 2.0:
+        return "⭐⭐⭐ Good"
+    if score >= 1.25:
+        return "⭐⭐ Fair"
+    return "⭐ Poor"
+
+
 async def radar_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not authorized(update):
         return
@@ -294,14 +371,23 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     temp = get_cpu_temp()
     temp_rating = cpu_rating(temp)
     uptime = escape_markdown(get_uptime())
-    health = get_receiver_health(metrics["snr"], metrics["saturation"], temp)
+    uptime_seconds = get_uptime_seconds()
+    health = get_receiver_health(
+        metrics["snr"], metrics["strong_percent"], temp)
+    quality = get_receiver_quality(
+        temp, metrics["snr"], metrics["strong_percent"], uptime_seconds)
     gain = metrics["gain"]
     snr = metrics["snr"]
-    saturation = metrics["saturation"]
+    signal = metrics["signal"]
+    noise = metrics["noise"]
+    minute_messages = metrics["minute_messages"]
+    strong_percent = metrics["strong_percent"]
 
     temp_value = "Unavailable" if temp is None else f"{temp:.1f}°C"
-    gain_value = "Unavailable" if gain is None else f"{float(gain):.1f} dB"
+    gain_value = "Auto" if gain is None else f"{float(gain):.1f} dB"
     snr_value = "Unavailable" if snr is None else f"{snr:.1f} dB"
+    signal_value = "Unavailable" if signal is None else f"{signal:.1f} dBFS"
+    noise_value = "Unavailable" if noise is None else f"{noise:.1f} dBFS"
 
     message = [
         "📡 Receiver Status",
@@ -313,12 +399,18 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🌡️ CPU Temp: {temp_value} {temp_rating}",
         "",
         f"📶 Gain: {gain_value}",
+        f"📶 RSSI: {signal_value}",
+        f"🌫 Noise Floor: {noise_value}",
+        "",
+        f"📨 Last Minute Messages: {minute_messages:,}",
         "",
         f"📈 SNR: {snr_value}",
         get_snr_rating(snr),
         "",
-        f"⚡ Saturation: {saturation:.2f}%",
-        get_saturation_rating(saturation),
+        f"⚡ Strong Signal %: {strong_percent:.2f}%",
+        get_strong_signal_rating(strong_percent),
+        "",
+        f"{quality}",
         "",
         f"📨 Messages accepted: {metrics['accepted']:,}",
         f"💥 Strong signals: {metrics['strong']:,}",
@@ -341,7 +433,7 @@ async def about_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = [
         f"🤖 {_format_bot_name()}",
         "",
-        f"Version: `{escape_markdown(_format_version())}`",
+        f"Version {_format_version()}",
         "",
         "Aircraft monitoring bot for:",
         "",
